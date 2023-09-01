@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import validateFields from './validations';
 
 export default function useFormulary({
-  formTitle,
+  formTitleComponent,
   loadingComponent,
   submitComponent,
   fieldsArray,
@@ -11,7 +12,9 @@ export default function useFormulary({
   asyncOnAutoSave,
 }) {
   validateFields({
-    formTitle,
+    formTitleComponent,
+    loadingComponent,
+    submitComponent,
     fieldsArray,
     asyncOnLoad,
     asyncOnSubmit,
@@ -19,46 +22,72 @@ export default function useFormulary({
     asyncOnAutoSave,
   });
   const [message, setMessage] = useState('');
+  const [updates, setUpdates] = useState(0);
+  const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fields, setFields] = useState(fieldsArray);
-  const [title, setTitle] = useState(formTitle);
+  const [fields, sF] = useState(fieldsArray);
+  const [title, setTitle] = useState(formTitleComponent);
   const [result, setResult] = useState([]);
-  const [ready, setReady] = useState([]);
+  const [ready, setReady] = useState(true);
   const [submitButton, setSubmitButton] = useState(submitComponent);
-  const sleep = async (ms) => {
-    await new Promise((resolve) => {
-      setInterval(() => {
-        resolve(true);
-      }, ms);
+  const setFieldsResults = (fieldName, value, saved) => {
+    const index = result.findIndex((r) => r.name === fieldName);
+    if (index >= 0) {
+      result[index].value = value;
+    } else {
+      result.push({ name: fieldName, value, saved });
+    }
+    setResult(result);
+  };
+  const modField = async (fieldName) => {
+    setLoading(true);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const index = fields.findIndex((f) => f.name == fieldName);
+        if (index >= 0) {
+          resolve(index);
+        }
+        reject(null);
+      }, 50);
     });
   };
-  useEffect(() => {
-    if (asyncOnLoad) {
-      asyncOnLoad();
-    }
-  }, []);
-  function setValue(fieldName, value) {
-    setLoading(true);
-    const index = fields.findIndex((f) => f.name === fieldName);
-    fields[index].defaultValue = value;
-    setFields(fields);
-    new Promise((resolve) => {
-      setInterval(() => {
-        setLoading(false);
-      }, 1);
-    })
-  }
-  function setOptions(fieldName, options) {
-    setLoading(true);
-    const index = fields.findIndex((f) => f.name === fieldName);
-    fields[index].options = options;
-    setFields(fields);
-    new Promise((resolve) => {
-      setInterval(() => {
-        resolve()
-      }, 100);
-    }).then(()=>setLoading(false))
-  }
+
+  const setFields = (fields) => {
+    sF(fields);
+    setLoading(false);
+  };
+
+  const setOptions = (fieldName, options) => {
+    modField(fieldName).then((index) => {
+      fields[index]['data-options'] = options;
+      setFields(fields);
+    });
+  };
+
+  const setFieldValue = (fieldName, value, saved) => {
+    const field = document.querySelector('[name="' + fieldName + '"]');
+    field.value = value;
+    setFieldsResults(fieldName, value, saved);
+  };
+
+  const setFieldSrc = (fieldName, src) => {
+    modField(fieldName).then((index) => {
+      fields[index].src = src;
+      setFields(fields);
+    });
+  };
+
+  const addField = (field) => {
+    modField(field.name)
+      .then(() => {
+        setFields(fields);
+      })
+      .catch((err) => {
+        fields.push(field);
+        setFields(fields);
+      });
+  };
+
   return {
     loading,
     setLoading,
@@ -80,50 +109,13 @@ export default function useFormulary({
     setOptions,
     ready,
     setReady,
-    setValue,
+    setFieldValue,
+    errors,
+    setErrors,
+    updates,
+    setUpdates,
+    addField,
+    setFieldSrc,
+    setFieldsResults
   };
-}
-
-function validateFields({
-  formTitle,
-  fieldsArray,
-  asyncOnLoad,
-  asyncOnSubmit,
-  asyncOnChange,
-  asyncOnAutoSave,
-}) {
-  isNotNull(formTitle);
-  isArray(fieldsArray);
-  isAsyncFunction(asyncOnLoad);
-  isAsyncFunction(asyncOnSubmit);
-  isAsyncFunction(asyncOnChange);
-  isAsyncFunction(asyncOnAutoSave);
-}
-
-function isNotNull(element) {
-  if (element == undefined || element == null)
-    throw new Error('formTitle cannot be null');
-}
-
-function isString(text) {
-  if (text != undefined)
-    if (typeof text !== 'string') throw new Error('formTitle must be a string');
-}
-
-function isArray(arr) {
-  if (arr != undefined)
-    if (typeof arr !== 'object')
-      throw new Error('fields array must be an array');
-}
-
-function isAsyncFunction(fn) {
-  if (fn != undefined) {
-    if (
-      typeof fn !== 'function' ||
-      (fn instanceof Function && fn.constructor.name !== 'AsyncFunction')
-    )
-      throw new Error(
-        'asyncOnLoad, asyncOnSubmit, asyncOnChange, asyncOnAutoSave must be async functions'
-      );
-  }
 }

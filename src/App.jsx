@@ -1,104 +1,157 @@
-import { useEffect } from 'react';
-
 import './App.css';
 import useFormulary from './hook/use-formulary';
 import Formulary from './components/formulary';
-const inputStyle = {
-  padding: '5px',
-};
-async function sleep(fields) {
-  if (fields.length > 0) {
-    const options = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{"lat":20.0163943,"lng":-100.7303244}',
-    };
+import { Component, useEffect, useState } from 'react';
+import { defaultImage } from './utils/default-image';
+import { styled } from 'styled-components';
+const StyledInput = styled.input`
+  padding: 1rem;
+  background-color: lightblue;
+  border-radius: 10px;
+`;
 
-    await fetch('https://geometry-telmex.vercel.app/validate', options);
-  }
-}
+const StyledLabel = styled.label`
+
+  text-align: left;
+
+`
+
 function App() {
-  async function aditionalAction(){
-    context.setOptions("firstName", ["opcoipn1","opcion2"])
-  }
-  async function handleSubmit(fields, form) {
-    await sleep(fields);
-    let title, newFields;
-    switch (context.title) {
-      case 'Datos personales':
-        title = 'Direccion';
-        newFields = [
-          {
-            name: 'street',
-            label: 'Calle',
-            type: 'text',
-            defaultValue: "default",
-            required: true,
-            readOnly: false,
-            style: inputStyle,
-          },
-        ];
-        break;
-      case 'Direccion':
-        title = 'Gracias';
-        newFields = [];
-        break;
-      default:
-        break;
-    }
+  const [changes, setChanges] = useState(0);
+  useEffect(() => {}, [changes]);
 
-    context.setTitle(title);
-    context.setFields(newFields);
-    return true;
-  }
-  async function handleLoadData(fields){
-    // await sleep([1,1]);
-    return [];
-    // return [{name: "firstName", value: "Irving Jones"}]
-  }
   const context = useFormulary({
-    formTitle: 'Datos personales',
-    loadingComponent: 'loading...',
+    formTitleComponent: 'Datos personales',
+    loadingComponent: 'loading..',
     submitComponent: <button type="submit">Continuar</button>,
-    asyncOnChange: aditionalAction,
-    asyncOnLoad: handleLoadData,
-    asyncOnSubmit: handleSubmit,
-    asyncOnAutoSave: async (fields) => {
-      await sleep(fields);
-      return true;
+    asyncOnChange: async () => {},
+    asyncOnLoad: async (fields) => {
+      // await sleep(1000);
+      return [
+        {
+          name: 'firstName',
+          value: 'Hola mundo',
+        },
+        {
+          name: 'ineReverso',
+          src: defaultImage,
+        },
+      ];
     },
+    asyncOnSubmit: async () => {},
+    asyncOnAutoSave: async () => {},
     fieldsArray: [
       {
         name: 'firstName',
-        label: 'Nombre',
-        type: 'text',
-        required: true,
-        readOnly: false,
-        style: inputStyle,
+        options: ["irving", "jones"],
+        inputComponent: <StyledInput  />,
+        labelComponent: <StyledLabel>Nombre Principal</StyledLabel>,
+        flexDirection: "column",
       },
       {
-        name: 'lastName',
-        label: 'Apellido',
-        type: 'text',
-        required: true,
-        readOnly: false,
-        style: inputStyle,
-        options: ["irving", "jones", "valdes", "maciel", "esta es otra opcion"]
-      },
-      {
-        id: 'boton1',
-        type: 'component',
-        component: <button type="button" onClick={aditionalAction}>Accion adicional</button>,
+        name: 'ineReverso',
+        inputComponent: <StyledInput  type='file' />,
+        labelComponent: <StyledLabel>Ine por el reverso</StyledLabel>,
+        flexDirection: "column",
       },
     ],
   });
-  useEffect(() => {}, []);
 
   return (
-    <>
+    <div style={{ width: '100%' }}>
+      <button
+        onClick={() => {
+          context.setTitle('Nuevo Titulo');
+          setChanges(changes + 1);
+        }}
+      >
+        Cambiar titulo
+      </button>
+
+      <button
+        onClick={() => {
+          context.addField({
+            name: 'ineFrente',
+            label: 'Ine por el Frente',
+            type: 'file',
+            'data-filetype': 'image',
+            style: fileInputStyle,
+          });
+          setChanges(changes + 1);
+        }}
+      >
+        Agregar un campo
+      </button>
+
+      <button
+        onClick={() => {
+          context.setFields([
+            {
+              name: 'phone',
+              label: 'Telefono',
+              type: 'text',
+              style: inputStyle,
+            },
+            {
+              name: 'state',
+              label: 'Estado',
+              type: 'text',
+              style: inputStyle,
+            },
+            {
+              name: 'gafete',
+              label: 'Foto para gafete',
+              type: 'file',
+              'data-filetype': 'image',
+              style: fileInputStyle,
+            },
+          ]);
+          setChanges(changes + 1);
+        }}
+      >
+        cambiar todos los campos
+      </button>
+
+      <button
+        onClick={() => {
+          context.setOptions('state', ['Michoacan', 'Guanajuato']);
+          setChanges(changes + 1);
+        }}
+      >
+        Agregar opciones a estado
+      </button>
+
+      <button
+        onClick={() => {
+          context.setFieldValue('phone', '4434858687');
+          setChanges(changes + 1);
+        }}
+      >
+        Agregar valor a telefono
+      </button>
+
+      <button
+        onClick={() => {
+          context.setFieldSrc('gafete', defaultImage);
+          setChanges(changes + 1);
+        }}
+      >
+        Agregar src al gafete
+      </button>
+
       <Formulary context={context} />
-    </>
+    </div>
   );
 }
+// const StyledComponent = function (params) {
+//   return <input style={{ background: 'green' }} {...params}  />;
+// };
 
+// const SomeClass = function () {
+//   const inputParams = StyledComponent() ;
+
+//   const styledInput = <input {...inputParams.props} />
+
+//   return <form>{styledInput}</form>;
+// };
 export default App;
