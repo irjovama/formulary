@@ -1,6 +1,11 @@
 import { useEffect } from 'react';
 import { setSavedResults, getUnsavedResults } from './saved-results';
-import { handleSubmit, handleChange, handleOnLoad } from './handles';
+import {
+  handleSubmit,
+  handleChange,
+  handleOnLoad,
+  handleAutoSave,
+} from './handles';
 import { principalTypes } from '../utils/principal-types';
 import { FieldConstructor } from './constructor';
 
@@ -10,7 +15,25 @@ export default function Formulary({ context }) {
   }, []);
 
   useEffect(() => {
-    // handleAutoSave(context);
+    let timerId;
+    const handleInputChange = async () => {
+      handleAutoSave(context);
+    };
+    if (
+      context.updates > 0 &&
+      context.result.length > 0 &&
+      context.errors.length == 0
+    ) {
+      clearTimeout(timerId);
+      timerId = setTimeout(handleInputChange, 5 * 1000);
+    } else {
+      console.log('no entro');
+      timerId = null;
+    }
+
+    return () => {
+      clearTimeout(timerId);
+    };
   }, [context.updates]);
 
   return (
@@ -21,7 +44,10 @@ export default function Formulary({ context }) {
           <form
             autoComplete="off"
             onSubmit={(e) => handleSubmit(e, context)}
-            onChange={(e) => handleChange(e, context)}
+            onChange={(e) => {
+              handleChange(e, context);
+              context.asyncOnChange(e)
+            }}
           >
             {context.fields &&
               context.fields.map((field) => {
@@ -33,7 +59,7 @@ export default function Formulary({ context }) {
                   />
                 );
               })}
-            {context.submitButton}
+            {!context.loading && context.submitButton}
           </form>
         </>
       }

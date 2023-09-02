@@ -30,15 +30,31 @@ export default function useFormulary({
   const [result, setResult] = useState([]);
   const [ready, setReady] = useState(true);
   const [submitButton, setSubmitButton] = useState(submitComponent);
-  const setFieldsResults = (fieldName, value, saved) => {
+
+  const setFieldResultProp = (fieldName, prop)=>{
+    const [propName, propValue] = Object.entries(prop)[0];
     const index = result.findIndex((r) => r.name === fieldName);
     if (index >= 0) {
+      result[index][propName] = propValue;
+    }  else {
+      result.push({ name: fieldName, [propName]: propValue, saved: true });
+    }
+    setResult(result);
+  }
+
+  const setFieldResult = (fieldName, value, saved) => {
+  
+    const index = result.findIndex((r) => r.name === fieldName);
+ 
+    if (index >= 0) {
       result[index].value = value;
+      result[index].saved = saved;
     } else {
       result.push({ name: fieldName, value, saved });
     }
     setResult(result);
   };
+
   const modField = async (fieldName) => {
     setLoading(true);
     return new Promise((resolve, reject) => {
@@ -59,15 +75,28 @@ export default function useFormulary({
 
   const setOptions = (fieldName, options) => {
     modField(fieldName).then((index) => {
-      fields[index]['data-options'] = options;
+      fields[index].options = options;
       setFields(fields);
     });
   };
 
-  const setFieldValue = (fieldName, value, saved) => {
+  const setFieldProp = (fieldName, prop) => {
+  
+    const [propName, propValue] = Object.entries(prop)[0];
+    const field = document.querySelector('[name="' + fieldName + '"]');
+    if(propName === 'dataset'){
+      const [dataPropName, dataPropValue] = Object.entries(propValue)[0];
+      field.dataset[dataPropName] = dataPropValue
+    } else {
+      field[propName] = propValue;
+    }
+    
+  };
+
+  const setFieldValue = (fieldName, value, saved = false) => {
     const field = document.querySelector('[name="' + fieldName + '"]');
     field.value = value;
-    setFieldsResults(fieldName, value, saved);
+    setFieldResult(fieldName, value, saved);
   };
 
   const setFieldSrc = (fieldName, src) => {
@@ -116,6 +145,8 @@ export default function useFormulary({
     setUpdates,
     addField,
     setFieldSrc,
-    setFieldsResults
+    setFieldResult,
+    setFieldProp,
+    setFieldResultProp,
   };
 }

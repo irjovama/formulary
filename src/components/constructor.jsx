@@ -1,4 +1,3 @@
-import { defaultImage } from '../utils/default-image';
 
 export function FieldConstructor({ context, field }) {
   const inputComponent = field?.inputComponent ? (
@@ -17,6 +16,17 @@ export function FieldConstructor({ context, field }) {
 }
 
 function ImageInput(context, field, component) {
+  const previewComponent = field?.previewComponent ? (
+    { ...field.previewComponent, props: { src: field?.src ? field.src : '' } }
+  ) : (
+    <></>
+  );
+
+  const labelComponent = field?.labelComponent ? (
+    field.labelComponent
+  ) : (
+    <label>{field.name}</label>
+  );
   const InputComponent = {
     ...component,
     props: {
@@ -31,18 +41,27 @@ function ImageInput(context, field, component) {
       style={{
         display: 'flex',
         flexDirection: field.flexDirection,
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
+        gap:"5px"
       }}
     >
-      {field.labelComponent}
+      {labelComponent}
       {InputComponent}
 
-      <img src={field?.src ? field.src : defaultImage} />
+      {previewComponent}
     </div>
   );
 }
 
 function Input(context, field, component) {
   const options = field?.options || [];
+  const labelComponent = field?.labelComponent ? (
+    field.labelComponent
+  ) : (
+    <label>{field.name}</label>
+  );
   const InputComponent = {
     ...component,
     props: {
@@ -58,9 +77,13 @@ function Input(context, field, component) {
       style={{
         display: 'flex',
         flexDirection: field.flexDirection,
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
+        gap:"5px"
       }}
     >
-      {field.labelComponent}
+      {labelComponent}
       {InputComponent}
       <datalist id={field.name + '-list'}>
         {options.map((o) => {
